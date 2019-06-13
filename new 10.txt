@@ -1,0 +1,72 @@
+@Bean(name = "amDataSource")
+	public DataSource amDataSource() {
+		/*
+		 * DriverManagerDataSource driverManagerDataSource = new
+		 * DriverManagerDataSource(); String jdbcUrl =
+		 * amConfigProperties.getSpringDatasourceUrl(); String jdbcUsername =
+		 * amConfigProperties.getSpringDatasourceUsername(); String jdbcPassword
+		 * = amConfigProperties.getSpringDatasourcePassword();
+		 * 
+		 * driverManagerDataSource.setDriverClassName(amConfigProperties.
+		 * getSpringDatasourceDriverClassName());
+		 * //driverManagerDataSource.setUrl(
+		 * "jdbc:mysql://localhost:3306/userbase");
+		 * driverManagerDataSource.setUrl(jdbcUrl);
+		 * driverManagerDataSource.setUsername(jdbcUsername);
+		 * driverManagerDataSource.setPassword(jdbcPassword); return
+		 * driverManagerDataSource;
+		 */
+
+		String jdbcUrl = amConfigProperties.getSpringDatasourceUrl();
+		String jdbcUsername = amConfigProperties.getSpringDatasourceUsername();
+		String jdbcPassword = amConfigProperties.getSpringDatasourcePassword();
+		String driverClass = amConfigProperties.getSpringDatasourceDriverClassName();
+		Integer maxConnections = amConfigProperties.getSpringDatasourceMaxConnections();
+		Integer minConnections = amConfigProperties.getSpringDatasourceMinConnections();
+		String validationQuery = amConfigProperties.getSpringDatasourceValidationQuery();
+
+		PoolProperties p = new PoolProperties();
+		p.setUrl(jdbcUrl);
+		p.setDriverClassName(driverClass);
+		p.setUsername(jdbcUsername);
+		p.setPassword(jdbcPassword);
+		p.setTestOnBorrow(true);
+		p.setValidationQuery(validationQuery);
+		p.setTestOnReturn(false);
+		p.setValidationInterval(30000);
+		p.setTimeBetweenEvictionRunsMillis(30000);
+		p.setMaxActive(maxConnections);
+		p.setInitialSize(minConnections);
+		p.setMaxIdle(maxConnections);
+		p.setRemoveAbandonedTimeout(300);
+		p.setMinEvictableIdleTimeMillis(55000);
+		p.setMinIdle(minConnections);
+		p.setLogAbandoned(false);
+		p.setRemoveAbandoned(true);
+		p.setJdbcInterceptors(
+	            "org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;"
+	            + "org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer;"
+	            + "org.apache.tomcat.jdbc.pool.interceptor.ResetAbandonedTimer");
+		DataSource datasource = new DataSource();
+		datasource.setPoolProperties(p);
+		return datasource;
+	}
+	
+	
+	spring.datasource.url=jdbc:mysql://localhost/rps_am_stl?useSSL=false&useUnicode=true
+spring.datasource.username=root
+spring.datasource.password=root
+spring.datasource.driverClassName=com.mysql.jdbc.Driver
+spring.datasource.max.connections=10
+spring.datasource.min.connections=5
+spring.datasource.validation.query=select 1
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.hibernate.transaction.jta.platform=org.hibernate.service.jta.platform.internal.NoJtaPlatform
+hibernate.enable_lazy_load_no_trans=true
+hibernate.transaction.jta.platform=org.hibernate.service.jta.platform.internal.NoJtaPlatform
+	
+	
+	
+	
+	
