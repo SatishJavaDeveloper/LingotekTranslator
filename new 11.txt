@@ -1,0 +1,166 @@
+package com.redpinesignals.am.configuration;
+
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+import org.apache.tomcat.jdbc.pool.DataSource;
+import org.apache.tomcat.jdbc.pool.PoolProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.accept.ContentNegotiationManager;
+import org.springframework.web.servlet.ViewResolver;
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.view.ContentNegotiatingViewResolver;
+
+import com.redpinesignals.am.ConfigProperties;
+
+/**
+ * The Class WebMvcConfig.
+ */
+@Component
+@Configuration
+public class WebMvcConfig extends WebMvcConfigurerAdapter {
+	
+	/** The logger. */
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+	/** The am config properties. */
+	@Autowired
+	private ConfigProperties amConfigProperties;
+
+	// @PostConstruct
+	// public void init() {
+	// }
+
+	/* (non-Javadoc)
+	 * @see org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter#configureContentNegotiation(org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer)
+	 */
+	@Override
+	public void configureContentNegotiation(final ContentNegotiationConfigurer configurer) {
+		configurer.defaultContentType(MediaType.APPLICATION_JSON).favorPathExtension(true);
+	}
+
+	/**
+	 * Password encoder.
+	 *
+	 * @return the b crypt password encoder
+	 */
+	@Bean
+	public BCryptPasswordEncoder passwordEncoder() {
+		BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+		return bCryptPasswordEncoder;
+	}
+
+	/**
+	 * Am data source.
+	 *
+	 * @return the data source
+	 */
+	@Bean(name = "amDataSource")
+	public DataSource amDataSource() {
+		/*
+		 * DriverManagerDataSource driverManagerDataSource = new
+		 * DriverManagerDataSource(); String jdbcUrl =
+		 * amConfigProperties.getSpringDatasourceUrl(); String jdbcUsername =
+		 * amConfigProperties.getSpringDatasourceUsername(); String jdbcPassword
+		 * = amConfigProperties.getSpringDatasourcePassword();
+		 * 
+		 * driverManagerDataSource.setDriverClassName(amConfigProperties.
+		 * getSpringDatasourceDriverClassName());
+		 * //driverManagerDataSource.setUrl(
+		 * "jdbc:mysql://localhost:3306/userbase");
+		 * driverManagerDataSource.setUrl(jdbcUrl);
+		 * driverManagerDataSource.setUsername(jdbcUsername);
+		 * driverManagerDataSource.setPassword(jdbcPassword); return
+		 * driverManagerDataSource;
+		 */
+
+		String jdbcUrl = amConfigProperties.getSpringDatasourceUrl();
+		String jdbcUsername = amConfigProperties.getSpringDatasourceUsername();
+		String jdbcPassword = amConfigProperties.getSpringDatasourcePassword();
+		String driverClass = amConfigProperties.getSpringDatasourceDriverClassName();
+		Integer maxConnections = amConfigProperties.getSpringDatasourceMaxConnections();
+		Integer minConnections = amConfigProperties.getSpringDatasourceMinConnections();
+		String validationQuery = amConfigProperties.getSpringDatasourceValidationQuery();
+
+		PoolProperties p = new PoolProperties();
+		p.setUrl(jdbcUrl);
+		p.setDriverClassName(driverClass);
+		p.setUsername(jdbcUsername);
+		p.setPassword(jdbcPassword);
+		p.setTestOnBorrow(true);
+		p.setValidationQuery(validationQuery);
+		p.setTestOnReturn(false);
+		p.setValidationInterval(30000);
+		p.setTimeBetweenEvictionRunsMillis(30000);
+		p.setMaxActive(maxConnections);
+		p.setInitialSize(minConnections);
+		p.setMaxIdle(maxConnections);
+		p.setRemoveAbandonedTimeout(300);
+		p.setMinEvictableIdleTimeMillis(55000);
+		p.setMinIdle(minConnections);
+		p.setLogAbandoned(false);
+		p.setRemoveAbandoned(true);
+		p.setJdbcInterceptors(
+	            "org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;"
+	            + "org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer;"
+	            + "org.apache.tomcat.jdbc.pool.interceptor.ResetAbandonedTimer");
+		DataSource datasource = new DataSource();
+		datasource.setPoolProperties(p);
+		return datasource;
+	}
+
+	/**
+	 * Content negotiating view resolver.
+	 *
+	 * @param manager the manager
+	 * @return the view resolver
+	 */
+	/*
+	 * Configure ContentNegotiatingViewResolver
+	 */
+	@Bean
+	public ViewResolver contentNegotiatingViewResolver(final ContentNegotiationManager manager) {
+		ContentNegotiatingViewResolver resolver = new ContentNegotiatingViewResolver();
+		resolver.setContentNegotiationManager(manager);
+
+		// Define all possible view resolvers
+		List<ViewResolver> resolvers = new ArrayList<>();
+
+		resolver.setViewResolvers(resolvers);
+		return resolver;
+	}
+
+	/**
+	 * Constants properties.
+	 *
+	 * @return the properties
+	 */
+	@Bean
+	public Properties constantsProperties() {
+		Properties prop = new Properties();
+		try {
+			String filename = "constants.properties";
+			InputStream input = null;
+			input = WebMvcConfig.class.getClassLoader().getResourceAsStream(filename);
+			if (input == null) {
+				System.out.println("Sorry, unable to find " + filename);
+				return prop;
+			}
+			// load a properties file from class path, inside static method
+			prop.load(input);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+		return prop;
+	}
+}
